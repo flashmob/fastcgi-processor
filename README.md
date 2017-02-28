@@ -15,7 +15,7 @@ Just like a web server would hand over the HTTP request to a FastCGI backend, th
 allows you to hand over the processing of an email to your FastCGI backend, such as php-fpm.
 
 The reason why you would do this is because perhaps your codebase is in a scripting language such as PHP,
-so there's no need to learn Go, becoming easier to maintain, no need to re-compile to change, use your favourite 
+so there's no need to learn Go, becoming easier for you to maintain, no need to re-compile to change, use your favourite 
 framework / library / IDE, etc.
 
 Also, there's no overhead of a web server - it goes straight to your script.
@@ -61,18 +61,18 @@ Don't forget to add `FastCGI` to the end of your `process_stack` config option, 
 
 ## Validate Recipient Email
 
-The parameters comes to to your validate script via HTTP GET.
+A single parameter comes to to your recipient validating script via HTTP GET.
 
-Parameter: `rcpt_to` - the email address that we want to validate
+* `rcpt_to` - the email address that we want to validate
 
 Output:
 
-Please echo the string "PASS" and nothing else if validation passed.
+Please echo the string *PASS* and nothing else if validation passed.
 Otherwise return anything you wish.
 
 ## Save Mail
 
-The parameters comes to to your validate script via HTTP POST.
+The parameters comes to to your saving script via a HTTP POST.
 
 The following parameters will be sent:
 
