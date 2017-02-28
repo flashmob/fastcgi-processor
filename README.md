@@ -20,7 +20,7 @@ framework / library / IDE, etc.
 
 Also, there's no overhead of a web server - it goes straight to your script.
 
-So, say good-bye to Web Services. Say hello to Email Services!
+So, say good-bye to Web Services. Say hello to Email Services! A new paradigm is here to take the interweb by storm. Well, maybe once a more catchy name is given...
 
 ## Usage
 
