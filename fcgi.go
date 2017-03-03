@@ -44,7 +44,7 @@ func newFastCGIProcessor(config *fcgiConfig) (*FastCGIProcessor, error) {
 }
 
 func (f *FastCGIProcessor) connect() (err error) {
-	backends.Log().Info("connecting to fcgi:", f.config.ConnectionType, f.config.ConnectionAddress)
+	backends.Log().Debug("connecting to fcgi:", f.config.ConnectionType, f.config.ConnectionAddress)
 	f.client, err = fcgiclient.Dial(f.config.ConnectionType, f.config.ConnectionAddress)
 	return err
 }
@@ -114,7 +114,7 @@ func (f *FastCGIProcessor) postSave(e *mail.Envelope) (result []byte, err error)
 	return
 
 	/*
-		todo: figure out how we can call directly and use a reader for efficiency, eg.
+		todo: figure out how we can call directly and use a reader for efficiency, PRs welcome. eg.
 
 			r := io.MultiReader(
 				bytes.NewReader([]byte("---------------------------974767299852498929531610575\r\n")),
