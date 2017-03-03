@@ -44,18 +44,24 @@ The following values are required in your `backend_config` section
 "backend_config":{
   "fcgi_script_filename_save" : "/home/path/to/save.php",
   "fcgi_script_filename_validate" : "/home/path/to/validate.php",
-  "fcgi_connection_type" : "tcp",
+  "fcgi_connection_type" : "unix",
   "fcgi_connection_address" : "/tmp/php-fpm.sock"
   // .. other config values
 }           
 
 
-
 ```
+
+`fcgi_connection_type` type can be `unix` or `tcp`. 
+`fcgi_connection_address` is a path to a unix socket descriptor, or IP address with tcp port eg. "127.0.0.1:8000"
+
+If `fcgi_connection_address` using the unix socket descriptor, make sure your program has 
+permissions for writing to it. The permissions will be tested during initialization.
 
 Don't forget to add `FastCGI` to the end of your `process_stack` config option, eg:
 
 `"process_stack": "HeadersParser|Debugger|Hasher|Header|FastCGI",`
+
 
 # Scripting
 
@@ -83,6 +89,9 @@ The following parameters will be sent:
 - `mail_from` - string of the From email address, could be blank to indicate a bounce
 - `body` - the raw email body, along with the headers. Please make sure your Fast CGI gateway can handle large enough POST
 
+Output: 
+
+Please echo the string `SAVED` if successful.
 
 ## Example
 

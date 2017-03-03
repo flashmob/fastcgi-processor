@@ -7,19 +7,17 @@ import (
 
 	"github.com/flashmob/go-guerrilla/backends"
 	"github.com/flashmob/go-guerrilla/mail"
-	"github.com/tomasen/fcgi_client"
 	"github.com/flashmob/go-guerrilla/response"
+	"github.com/tomasen/fcgi_client"
 	"io/ioutil"
 
 	"strconv"
-
 )
-
 
 type fcgiConfig struct {
 	// full path to script for the save mail task
 	// eg. /home/user/scripts/save.php
-	ScriptFileNameNameSave     string `json:"fcgi_script_filename_save"`
+	ScriptFileNameNameSave string `json:"fcgi_script_filename_save"`
 	// full path to script for recipient validation
 	// eg /home/user/scripts/val_rcpt.php
 	ScriptFileNameNameValidate string `json:"fcgi_script_filename_validate"`
@@ -29,14 +27,10 @@ type fcgiConfig struct {
 	ConnectionAddress string `json:"fcgi_connection_address"`
 }
 
-
-
 type FastCGIProcessor struct {
-
-	config  *fcgiConfig
+	config *fcgiConfig
 	client *fcgiclient.FCGIClient
 }
-
 
 func newFastCGIProcessor(config *fcgiConfig) (*FastCGIProcessor, error) {
 	p := &FastCGIProcessor{}
@@ -50,18 +44,24 @@ func newFastCGIProcessor(config *fcgiConfig) (*FastCGIProcessor, error) {
 }
 
 func (f *FastCGIProcessor) connect() (err error) {
+	backends.Log().Info("connecting to fcgi:", f.config.ConnectionType, f.config.ConnectionAddress)
 	f.client, err = fcgiclient.Dial(f.config.ConnectionType, f.config.ConnectionAddress)
 	return err
 }
 
 // get sends a get query to script with q query values
 func (f *FastCGIProcessor) get(script string, q url.Values) (result []byte, err error) {
+	if err := f.connect(); err != nil {
+		return result, err
+	}
+	defer f.client.Close()
 
 	env := make(map[string]string)
 	env["SCRIPT_FILENAME"] = script
 	env["SERVER_SOFTWARE"] = "Go-guerrilla fastcgi"
 	env["REMOTE_ADDR"] = "127.0.0.1"
 	env["QUERY_STRING"] = q.Encode()
+	env["SERVER_PROTOCOL"] = "HTTP/1.1"
 
 	resp, err := f.client.Get(env)
 	if err != nil {
@@ -71,7 +71,7 @@ func (f *FastCGIProcessor) get(script string, q url.Values) (result []byte, err 
 
 	result, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
-		backends.Log().Debug("FastCgi Read Body failed", err)
+		backends.Log().Debug("FastCgi read body failed", err)
 		return result, err
 	}
 
@@ -80,6 +80,10 @@ func (f *FastCGIProcessor) get(script string, q url.Values) (result []byte, err 
 }
 
 func (f *FastCGIProcessor) postSave(e *mail.Envelope) (result []byte, err error) {
+	if err := f.connect(); err != nil {
+		return result, err
+	}
+	defer f.client.Close()
 	env := make(map[string]string)
 	env["SCRIPT_FILENAME"] = f.config.ScriptFileNameNameSave
 	env["SERVER_SOFTWARE"] = "Go-guerrilla fastcgi"
@@ -110,21 +114,20 @@ func (f *FastCGIProcessor) postSave(e *mail.Envelope) (result []byte, err error)
 	return
 
 	/*
-	todo: figure out how we can call directly and use a reader for efficiency, eg.
+		todo: figure out how we can call directly and use a reader for efficiency, eg.
 
-		r := io.MultiReader(
-			bytes.NewReader([]byte("---------------------------974767299852498929531610575\r\n")),
-			// ..url encoded data here
-			// ..a boundary here
-			e.NewReader(),
+			r := io.MultiReader(
+				bytes.NewReader([]byte("---------------------------974767299852498929531610575\r\n")),
+				// ..url encoded data here
+				// ..a boundary here
+				e.NewReader(),
 
-		/*
+			/*
 
 
-		f.client.Post(env, "multipart/form-data; boundary=---------------------------974767299852498929531610575", e.NewReader(), e.Len())
+			f.client.Post(env, "multipart/form-data; boundary=---------------------------974767299852498929531610575", e.NewReader(), e.Len())
 	*/
 }
-
 
 var Processor = func() backends.Decorator {
 
@@ -149,12 +152,21 @@ var Processor = func() backends.Decorator {
 			return err
 		}
 		p.config = c
+		// test the settings
+		v := url.Values{}
+		v.Set("rcpt_to", "test@example.com")
+		backends.Log().Info("testing script:", p.config.ScriptFileNameNameValidate)
+		result, err := p.get(p.config.ScriptFileNameNameValidate, v)
+		if err != nil {
+			backends.Log().WithError(err).Error("could get fcgi to work")
+			return nil
+		} else {
+			backends.Log().Debug(result)
+		}
 		return nil
 	})
 	// register our initializer
 	backends.Svc.AddInitializer(initializer)
-
-
 
 	return func(c backends.Processor) backends.Processor {
 		// The function will be called on each email transaction.
@@ -172,20 +184,19 @@ var Processor = func() backends.Decorator {
 					if err != nil {
 						backends.Log().Debug("FastCgi error", err)
 						return backends.NewResult(
-							response.Canned.FailNoSenderDataCmd),
+								response.Canned.FailNoSenderDataCmd),
 							backends.StorageNotAvailable
 					}
-					if string(result[0:4]) == "PASS" {
+					if string(result[0:6]) == "PASSED" {
 						// validation passed
 						return c.Process(e, task)
 					} else {
 						// validation failed
 						backends.Log().Debug("FastCgi Read Body failed", err)
 						return backends.NewResult(
-							response.Canned.FailNoSenderDataCmd),
+								response.Canned.FailNoSenderDataCmd),
 							backends.StorageNotAvailable
 					}
-
 
 					return c.Process(e, task)
 
@@ -197,7 +208,7 @@ var Processor = func() backends.Decorator {
 					resp, err := p.postSave(e)
 					if err != nil {
 
-					} else if strings.Index(string(resp), "PASS") == 0 {
+					} else if strings.Index(string(resp), "SAVED") == 0 {
 						return c.Process(e, task)
 					} else {
 						backends.Log().WithError(err).Error("Could not save email")
