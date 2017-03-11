@@ -24,17 +24,40 @@ So, say good-bye to Web Services. Say hello to Email Services! A new paradigm is
 
 ## Usage
 
-Import `"github.com/flashmob/fastcgi-processor"` to your Go-guerrilla project. Import `"github.com/flashmob/go-guerrilla/backends"` 
-assuming your have done already, assuming you have imported the go-guerrilla package already.
+Import `"github.com/flashmob/fastcgi-processor"` to your Go-guerrilla project.  
+Assuming you have imported the go-guerrilla package already, and all dependencies.
 
-Somewhere at the top of your code, maybe in your `init()` function, add
+Then, when using go-guerrilla as a package, use something like this
 
-`backends.Svc.AddProcessor("FastCGI", fastcgi_processor.Processor)`
+```go
 
-This will let Go-Guerrilla know about your FastCGI processor.
 
-See the configuration section for how to configure. Send your configuration to Go-Guerrilla's backends.New() function.
+cfg := &AppConfig{
+    LogFile:      "stderr",
+    AllowedHosts: []string{"example.com"},
+    BackendConfig: backends.BackendConfig{
+        "save_process" : "HeadersParser|Debugger|FastCGI",
+        "fcgi_script_filename_save" : "/home/path/to/save.php",
+        "fcgi_script_filename_validate" : "/home/path/to/validate.php",
+        "fcgi_connection_type" : "unix",
+        "fcgi_connection_address" : "/tmp/php-fpm.sock"
+    },
+}
+d := Daemon{Config: cfg}
+d.AddProcessor("FastCGI", fastcgi_processor.Processor)
 
+d.Start()
+
+// .. keep the server busy..
+
+```
+
+
+This will let Go-Guerrilla know about your FastCGI processor. Note that all we done is
+added FastCGI to the end of the `save_process` config option, then used the `d.AddProcessor` api
+ call to register it.
+
+See the configuration section for how to configure. 
 
 ## Configuration
 
@@ -58,9 +81,9 @@ The following values are required in your `backend_config` section
 If `fcgi_connection_address` using the unix socket descriptor, make sure your program has 
 permissions for writing to it. The permissions will be tested during initialization.
 
-Don't forget to add `FastCGI` to the end of your `process_stack` config option, eg:
+Don't forget to add `FastCGI` to the end of your `save_process` config option, eg:
 
-`"process_stack": "HeadersParser|Debugger|Hasher|Header|FastCGI",`
+`"save_process": "HeadersParser|Debugger|Hasher|Header|FastCGI",`
 
 
 # Scripting
