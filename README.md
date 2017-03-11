@@ -118,7 +118,7 @@ Please echo the string `SAVED` if successful.
 
 ## Example
 
-TODO example smtp server
+See MailDiranasaurus - it uses this package as an example, https://github.com/flashmob/MailDiranasaurus
 
 ## Credits
 
