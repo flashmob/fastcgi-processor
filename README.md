@@ -26,7 +26,7 @@ Also, there's no overhead of a web server - it goes straight to your script.
 Import `"github.com/flashmob/fastcgi-processor"` to your Go-guerrilla project.  
 Assuming you have imported the go-guerrilla package already, and all dependencies.
 
-Then, when using go-guerrilla as a package, use something like this
+Then, when [using go-guerrilla as a package](https://github.com/flashmob/go-guerrilla/wiki/Using-as-a-package), use something like this
 
 ```go
 
@@ -52,8 +52,8 @@ d.Start()
 ```
 
 
-This will let Go-Guerrilla know about your FastCGI processor. Note that all we done is
-added FastCGI to the end of the `save_process` config option, then used the `d.AddProcessor` api
+This will let Go-Guerrilla know about your FastCGI processor. Note that all we did here is
+added `FastCGI` to the end of the `save_process` config option, then used the `d.AddProcessor` api
  call to register it.
 
 See the configuration section for how to configure. 
