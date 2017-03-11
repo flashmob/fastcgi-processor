@@ -36,6 +36,7 @@ cfg := &AppConfig{
     AllowedHosts: []string{"example.com"},
     BackendConfig: backends.BackendConfig{
         "save_process" : "HeadersParser|Debugger|FastCGI",
+        "validate_process" : "FastCGI",
         "fcgi_script_filename_save" : "/home/path/to/save.php",
         "fcgi_script_filename_validate" : "/home/path/to/validate.php",
         "fcgi_connection_type" : "unix",
@@ -52,9 +53,9 @@ d.Start()
 ```
 
 
-This will let Go-Guerrilla know about your FastCGI processor. Note that all we did here is
+This will let Go-Guerrilla know about your FastCGI processor. Note that here we've
 added `FastCGI` to the end of the `save_process` config option, then used the `d.AddProcessor` api
- call to register it.
+ call to register it. Then configured other settings.
 
 See the configuration section for how to configure. 
 
@@ -84,6 +85,9 @@ Don't forget to add `FastCGI` to the end of your `save_process` config option, e
 
 `"save_process": "HeadersParser|Debugger|Hasher|Header|FastCGI",`
 
+also, add `FastCGI` to the end of your `validate_process` config option if you want to use the validate script, eg:
+
+`"validate_process": "FastCGI",`
 
 # Scripting
 
