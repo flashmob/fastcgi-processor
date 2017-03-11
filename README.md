@@ -64,12 +64,11 @@ See the configuration section for how to configure.
 The following values are required in your `backend_config` section
 
 ```json
-"backend_config":{
+{
   "fcgi_script_filename_save" : "/home/path/to/save.php",
   "fcgi_script_filename_validate" : "/home/path/to/validate.php",
   "fcgi_connection_type" : "unix",
   "fcgi_connection_address" : "/tmp/php-fpm.sock"
-  // .. other config values
 }           
 
 
